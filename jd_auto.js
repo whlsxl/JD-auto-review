@@ -31,30 +31,30 @@ JDA.shuffle = function(length) {
 
 JDA.init = function() {
   var ns = JDA.cmtsSelectNodeString();
-  $(".thumbnail-list").append(ns);
-  JDA.startAll();
-  $(".f-textarea").find('textarea').each(function(index, el) {
+  $('.thumbnail-list').append(ns);
+  JDA.startAll('body', JDA.getDefaultStar());
+  $('.f-textarea').find('textarea').each(function(index, el) {
     JDA.setCmt(this);
   });
-  $("#activityVoucher").bind('DOMNodeInserted', function(e) {
-    JDA.startAll(e.target);
+  $('#activityVoucher').bind('DOMNodeInserted', function(e) {
+    JDA.startAll(e.target, JDA.getDefaultStar());
   });
-  console.log($(".f-goods .fi-operate"))
-  console.log($(".f-goods"))
-  $(".f-goods .fi-operate").bind('DOMNodeInserted', function(e) {
+  $('.f-goods .fi-operate').bind('DOMNodeInserted', function(e) {
     JDA.setTags(e.target);
   });
+  JDA.addMenuBar()
 };
 
 // from parent node
 // star 1-5
-JDA.startAll = function(from = "body", star = 5, force = false) {
+JDA.startAll = function(from = 'body', star = 5, force = false) {
   if (isNaN(star)) { star = 5; }
   if (star > 5) { star = 5; }
   if (star < 0) { star = 0; }
   var starClass = "star" + star;
   $(from).find(".commstar").each(function(index, el) {
     if ( force || $(this).find(".active").length == 0 ) {
+      $(this).find(".active").removeClass('active')
       $(this).find("." + starClass).addClass("active");
       $(this).find('.star-info').text(star + "\u5206").addClass("highlight");
     }
@@ -132,6 +132,28 @@ JDA.setTags = function(from = "body", type = 0, count = 3) {
     });
   }
 };
+
+JDA.getDefaultStar = function() {
+  var defaultStar = JDA.getConfig('JDA_default_star');
+  if (defaultStar == '') {
+    return 5
+  }
+  return parseInt(JDA.getConfig('JDA_default_star'));
+}
+
+JDA.setDefaultStar = function(star) {
+  return JDA.setConfig('JDA_default_star', star);
+}
+
+JDA.addMenuBar = function() {
+  $('.f-btnbox').append('<div class="menu-bar-star" style="float:right;"><div style="float:left;">全部评分：</div><br><span class="commstar z-star-checked"><span class="star star1"><i class="face"></i></span><span class="star star2"><i class="face"></i></span><span class="star star3"><i class="face"></i></span><span class="star star4"><i class="face"></i></span><span class="star star5"><i class="face"></i></span><span class="star-info">0分</span></span></div>');
+  JDA.startAll($('.f-btnbox'), JDA.getDefaultStar());
+  $('.f-btnbox').find('.star').click(function(event) {
+    var star = parseInt($(this).siblings('.star-info').text());
+    JDA.startAll('body', star, true);
+    JDA.setDefaultStar(star);
+  });
+}
 
 JDA.init();
 

@@ -13,23 +13,39 @@ var JDA = {};
 JDA.default_cmts = [
 "特别棒，京东棒棒哒～～～",
 "好评！必须好评！汪汪汪",
-"这次狗东为朕服务的不错，喵"
+"这次狗东为朕服务的不错，喵～"
 ];
 
+JDA.shuffle = function(length) {
+  var arr = [];
+  while (length--) arr[length] = length;
+  var shuffled = arr.slice(0), i = arr.length, temp, index;
+  while (i--) {
+    index = Math.floor(i * Math.random());
+    temp = shuffled[index];
+    shuffled[index] = shuffled[i];
+    shuffled[i] = temp;
+  }
+  return shuffled;
+};
+
 JDA.init = function() {
-  var ns = JDA.cmtsSelectNodeString()
-  $(".thumbnail-list").append(ns)
+  var ns = JDA.cmtsSelectNodeString();
+  $(".thumbnail-list").append(ns);
   JDA.startAll();
   $(".f-textarea").find('textarea').each(function(index, el) {
     JDA.setCmt(this);
   });
-  $("#installVoucher").bind('DOMNodeInserted', function(e) {
-    JDA.startAll(e.target);
-  });
   $("#activityVoucher").bind('DOMNodeInserted', function(e) {
     JDA.startAll(e.target);
   });
+  console.log($(".f-goods .fi-operate"))
+  console.log($(".f-goods"))
+  $(".f-goods .fi-operate").bind('DOMNodeInserted', function(e) {
+    JDA.setTags(e.target);
+  });
 };
+
 // from parent node
 // star 1-5
 JDA.startAll = function(from = "body", star = 5, force = false) {
@@ -86,7 +102,36 @@ JDA.setCmt = function(textarea, text = null) {
   $(textarea).text(text)
 };
 
+// from the m-tagbox parent or m-tagbox node
+// type 0 is random 1 is ordered
+// count is selected count
+JDA.setTags = function(from = "body", type = 0, count = 3) {
+  if (count > 5) { count = 5; }
+  var block = function(target) {
+    var tagbox = $(target);
+    tagbox.find(".tag-item").removeClass("tag-checked");
+    if (type == 0) {
+      var length = tagbox.find('.tag-item').length;
+      var randomArr = JDA.shuffle(length);
+      var randomSlice = randomArr.slice(0, Math.min(count, length));
+      $.each(randomSlice, function(index, value) {
+        tagbox.find('.tag-item:eq(' + value + ')').toggleClass("tag-checked");
+      });
+    } else {
+      tagbox.find('.tag-item:lt(' + count + ')').toggleClass("tag-checked");
+    }
+  };
 
+  if ($(from).hasClass('.m-tagbox')) {
+    $(from).each(function() {
+      block(this);
+    });
+  } else {
+    $(from).find('.m-tagbox').each(function() {
+      block(this);
+    });
+  }
+};
 
 JDA.init();
 

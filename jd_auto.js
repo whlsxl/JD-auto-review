@@ -86,11 +86,11 @@ JDA.getCmts = function() {
 };
 
 JDA.cmtsSelectNodeString = function() {
-  var nodeString = "<div><select class='jda_auto_cmt'>";
+  var nodeString = '<div><select class="jda_auto_cmt">';
   $.each(JDA.getCmts(), function(index, value) {
-    nodeString += "<option>" + value + "</option>";
+    nodeString += '<option>' + value + '</option>';
   });
-  nodeString += "</select></div>";
+  nodeString += '</select></div>';
   return nodeString;
 };
 
@@ -105,12 +105,13 @@ JDA.setCmt = function(textarea, text = null) {
 // from the m-tagbox parent or m-tagbox node
 // type 0 is random 1 is ordered
 // count is selected count
-JDA.setTags = function(from = "body", type = 0, count = 3) {
+JDA.setTags = function(from = "body", type = null, count = 3) {
   if (count > 5) { count = 5; }
+  if (type == null) {type = JDA.getTagsType()}
   var block = function(target) {
     var tagbox = $(target);
     tagbox.find(".tag-item").removeClass("tag-checked");
-    if (type == 0) {
+    if (type == 'random') {
       var length = tagbox.find('.tag-item').length;
       var randomArr = JDA.shuffle(length);
       var randomSlice = randomArr.slice(0, Math.min(count, length));
@@ -138,21 +139,69 @@ JDA.getDefaultStar = function() {
   if (defaultStar == '') {
     return 5
   }
-  return parseInt(JDA.getConfig('JDA_default_star'));
+  return parseInt(defaultStar);
 }
 
 JDA.setDefaultStar = function(star) {
   return JDA.setConfig('JDA_default_star', star);
 }
 
+JDA.getTagsType = function() {
+  var type = JDA.getConfig("JDA_tags_type");
+  if (type == "") {
+    return 'random';
+  }
+  return type
+}
+
+JDA.setTagsType = function(type) {
+  JDA.setConfig("JDA_tags_type", type);
+}
+
+JDA.getTagsCount = function() {
+  var defaultCount = JDA.getConfig('JDA_tags_count');
+  if (defaultCount == '') {
+    return 3
+  }
+  return parseInt(defaultCount);
+}
+
+JDA.setTagsCount = function(count) {
+  return JDA.setConfig('JDA_tags_count', count);
+}
+
 JDA.addMenuBar = function() {
-  $('.f-btnbox').append('<div class="menu-bar-star" style="float:right;"><div style="float:left;">全部评分：</div><br><span class="commstar z-star-checked"><span class="star star1"><i class="face"></i></span><span class="star star2"><i class="face"></i></span><span class="star star3"><i class="face"></i></span><span class="star star4"><i class="face"></i></span><span class="star star5"><i class="face"></i></span><span class="star-info">0分</span></span></div>');
+  // stars
+  $('.f-btnbox').append('<div class="jda-menu-bar-star" style="float:right; margin-top: 4px; padding-left: 30px; "><div style="float:left; font-size:15px">全部评分：</div><br><span class="commstar z-star-checked"><span class="star star1"><i class="face"></i></span><span class="star star2"><i class="face"></i></span><span class="star star3"><i class="face"></i></span><span class="star star4"><i class="face"></i></span><span class="star star5"><i class="face"></i></span><span class="star-info">0分</span></span></div>');
   JDA.startAll($('.f-btnbox'), JDA.getDefaultStar());
   $('.f-btnbox').find('.star').click(function(event) {
     var star = parseInt($(this).siblings('.star-info').text());
     JDA.startAll('body', star, true);
     JDA.setDefaultStar(star);
   });
+  // tags type
+  $('.f-btnbox').append('<div class="dd jda-tag-options" style="float:right; margin-top: 9px; "><span style="float:left; padding-right:10px; font-size:15px; padding-top:2px;">标签选项:</span><div class="item" data-type="random"><a href="#none">随机标签</a></div> <div class="item" data-type="ordered"><a href="#none">顺序标签</a></div></div>');
+  $('.f-btnbox').append('<style type="text/css">' +
+    '.jda-tag-options .item {margin: 2px 8px 2px 0; float: left;}' +
+    '.jda-tag-options .item a {padding:4px 6px; border:1px solid #ccc;  background: #fff; font-size: 15px;}' +
+    '.jda-tag-options .item.selected a {border: 2px solid #e4393c; padding: 3px 5px;}' +
+    '</style>');
+  $('.f-btnbox a').click(function(e) {
+    var nowItem = e.target.closest('.item');
+    JDA.setTagsType($(nowItem).data('type'));
+    $(nowItem).addClass('selected');
+    $(nowItem).siblings('.item').removeClass('selected');
+    JDA.setTags()
+  });
+  $('.f-btnbox .item[data-type=' + JDA.getTagsType() + ']').addClass('selected');
+  // tags count
+  var node = '<div style="float: left; padding-top:2px;" ><select class="jda-auto-tags-count">';
+  for (var i = 0; i < 5; i++) {
+    node += '<option value="' + (i+1) + '">' + (i + 1) + '条</option>';
+  }
+  node += '</select></div>';
+  $('.f-btnbox .jda-tag-options').append(node);
+  $('.jda-auto-tags-count eq(' + JDA.getTagsCount() + ')').attr('checked', 'checked');
 }
 
 JDA.init();

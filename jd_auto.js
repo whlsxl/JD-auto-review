@@ -30,19 +30,17 @@ JDA.shuffle = function(length) {
 };
 
 JDA.init = function() {
-  var ns = JDA.cmtsSelectNodeString();
-  $('.thumbnail-list').append(ns);
+  JDA.setCmtsSelect();
   JDA.startAll('body', JDA.getDefaultStar());
-  $('.f-textarea').find('textarea').each(function(index, el) {
-    JDA.setCmt(this);
-  });
+  JDA.setAllCmtTextarea();
   $('#activityVoucher').bind('DOMNodeInserted', function(e) {
     JDA.startAll(e.target, JDA.getDefaultStar());
   });
   $('.f-goods .fi-operate').bind('DOMNodeInserted', function(e) {
     JDA.setTags(e.target);
   });
-  JDA.addMenuBar()
+  JDA.addMenuBar();
+  JDA.addChangeCmtBar();
 };
 
 // from parent node
@@ -78,60 +76,15 @@ JDA.setConfig = function(key, value) {
 };
 
 JDA.getCmts = function() {
-  var cmts = jQuery.parseJSON(JDA.getConfig("JDA_default_cmts"))
+  var cmts = jQuery.parseJSON(JDA.getConfig('JDA_default_cmts'))
   if (cmts == null) {
     return JDA.default_cmts;
   }
   return cmts
 };
 
-JDA.cmtsSelectNodeString = function() {
-  var nodeString = '<div><select class="jda_auto_cmt">';
-  $.each(JDA.getCmts(), function(index, value) {
-    nodeString += '<option>' + value + '</option>';
-  });
-  nodeString += '</select></div>';
-  return nodeString;
-};
-
-JDA.setCmt = function(textarea, text = null) {
-  if (text == null) {
-    var ns = JDA.getCmts()
-    text = ns[Math.floor(Math.random() * ns.length)]
-  }
-  $(textarea).text(text)
-};
-
-// from the m-tagbox parent or m-tagbox node
-// type 0 is random 1 is ordered
-// count is selected count
-JDA.setTags = function(from = "body", type = null, count = 3) {
-  if (count > 5) { count = 5; }
-  if (type == null) {type = JDA.getTagsType()}
-  var block = function(target) {
-    var tagbox = $(target);
-    tagbox.find(".tag-item").removeClass("tag-checked");
-    if (type == 'random') {
-      var length = tagbox.find('.tag-item').length;
-      var randomArr = JDA.shuffle(length);
-      var randomSlice = randomArr.slice(0, Math.min(count, length));
-      $.each(randomSlice, function(index, value) {
-        tagbox.find('.tag-item:eq(' + value + ')').toggleClass("tag-checked");
-      });
-    } else {
-      tagbox.find('.tag-item:lt(' + count + ')').toggleClass("tag-checked");
-    }
-  };
-
-  if ($(from).hasClass('.m-tagbox')) {
-    $(from).each(function() {
-      block(this);
-    });
-  } else {
-    $(from).find('.m-tagbox').each(function() {
-      block(this);
-    });
-  }
+JDA.setCmts = function(cmts) {
+  JDA.setConfig('JDA_default_cmts', JSON.stringify(cmts))
 };
 
 JDA.getDefaultStar = function() {
@@ -170,6 +123,67 @@ JDA.setTagsCount = function(count) {
   return JDA.setConfig('JDA_tags_count', count);
 }
 
+JDA.setCmtTextarea = function(textarea, text = null) {
+  if (text == null) {
+    var ns = JDA.getCmts()
+    text = ns[Math.floor(Math.random() * ns.length)]
+  }
+  $(textarea).text(text)
+};
+
+JDA.setAllCmtTextarea = function(text = null) {
+  $('.f-textarea').find('textarea').each(function(index, el) {
+    JDA.setCmtTextarea(this);
+  });
+}
+
+JDA.cmtsSelectNodeString = function() {
+  var nodeString = '<div class="jda_auto_cmt_div" style="padding-left: 30px; padding-top: 18px; float: left; "><select class="jda_auto_cmt">';
+  $.each(JDA.getCmts(), function(index, value) {
+    nodeString += '<option>' + value + '</option>';
+  });
+  nodeString += '</select></div>';
+  return nodeString;
+};
+
+JDA.setCmtsSelect = function() {
+  $('.jda_auto_cmt_div').remove()
+  var ns = JDA.cmtsSelectNodeString();
+  $('.thumbnail-list').append(ns);
+}
+
+// from the m-tagbox parent or m-tagbox node
+// type 0 is random 1 is ordered
+// count is selected count
+JDA.setTags = function(from = "body", type = null, count = -1) {
+  if (count > 5 || count < 0) { count = JDA.getTagsCount() }
+  if (type == null) {type = JDA.getTagsType()}
+  var block = function(target) {
+    var tagbox = $(target);
+    tagbox.find(".tag-item").removeClass("tag-checked");
+    if (type == 'random') {
+      var length = tagbox.find('.tag-item').length;
+      var randomArr = JDA.shuffle(length);
+      var randomSlice = randomArr.slice(0, Math.min(count, length));
+      $.each(randomSlice, function(index, value) {
+        tagbox.find('.tag-item:eq(' + value + ')').toggleClass("tag-checked");
+      });
+    } else {
+      tagbox.find('.tag-item:lt(' + count + ')').toggleClass("tag-checked");
+    }
+  };
+
+  if ($(from).hasClass('.m-tagbox')) {
+    $(from).each(function() {
+      block(this);
+    });
+  } else {
+    $(from).find('.m-tagbox').each(function() {
+      block(this);
+    });
+  }
+};
+
 JDA.addMenuBar = function() {
   // stars
   $('.f-btnbox').append('<div class="jda-menu-bar-star" style="float:right; margin-top: 4px; padding-left: 30px; "><div style="float:left; font-size:15px">全部评分：</div><br><span class="commstar z-star-checked"><span class="star star1"><i class="face"></i></span><span class="star star2"><i class="face"></i></span><span class="star star3"><i class="face"></i></span><span class="star star4"><i class="face"></i></span><span class="star star5"><i class="face"></i></span><span class="star-info">0分</span></span></div>');
@@ -183,8 +197,8 @@ JDA.addMenuBar = function() {
   $('.f-btnbox').append('<div class="dd jda-tag-options" style="float:right; margin-top: 9px; "><span style="float:left; padding-right:10px; font-size:15px; padding-top:2px;">标签选项:</span><div class="item" data-type="random"><a href="#none">随机标签</a></div> <div class="item" data-type="ordered"><a href="#none">顺序标签</a></div></div>');
   $('.f-btnbox').append('<style type="text/css">' +
     '.jda-tag-options .item {margin: 2px 8px 2px 0; float: left;}' +
-    '.jda-tag-options .item a {padding:4px 6px; border:1px solid #ccc;  background: #fff; font-size: 15px;}' +
-    '.jda-tag-options .item.selected a {border: 2px solid #e4393c; padding: 3px 5px;}' +
+    '.jda-tag-options .item a {padding:6px 8px; border:1px solid #ccc;  background: #fff; font-size: 13px;}' +
+    '.jda-tag-options .item.selected a {border: 2px solid #e4393c; padding: 4px 6px;}' +
     '</style>');
   $('.f-btnbox a').click(function(e) {
     var nowItem = e.target.closest('.item');
@@ -201,7 +215,84 @@ JDA.addMenuBar = function() {
   }
   node += '</select></div>';
   $('.f-btnbox .jda-tag-options').append(node);
-  $('.jda-auto-tags-count eq(' + JDA.getTagsCount() + ')').attr('checked', 'checked');
+  $('.jda-auto-tags-count option:eq(' + (JDA.getTagsCount()-1) + ')').attr('selected', 'selected');
+  $('.jda-auto-tags-count').change(function(e) {
+    JDA.setTagsCount(parseInt($(e.target).find(':selected').attr('value')));
+    JDA.setTags()
+  });
+}
+
+JDA.addChangeCmtBar = function() {
+  var nodeString = '<div class="jda-change-cmt-bar">';
+  var cmts = JDA.getCmts();
+  if (cmts.length == 0) {
+    cmts = [''];
+  }
+  $.each(cmts, function(index, value) {
+    nodeString += ('<div class="cmt-item">' +
+    '<input type="text" value="' + value + '">' +
+    '<a href class="cmt-delete">删除</a>' +
+    '<a href class="cmt-add">增加</a>' +
+    '</div>');
+  });
+  nodeString += ('<div class="cmt-functions" style="width: 100%; text-align: center; padding-top: 20px;">' +
+    '<a href class="cmt-reset">重置</a>' +
+    '<a href class="cmt-refresh">刷新所有评论</a>' +
+    '</div>');
+  nodeString += '</div>'
+  $('.mycomment-form').append(nodeString);
+  $('.mycomment-form').append('<style type="text/css">' +
+    '.cmt-item {width: 100%; text-align: center; padding-top: 20px;}' +
+    '.jda-change-cmt-bar input {width:500px; height: 20px; padding: 3px;}' +
+    '.jda-change-cmt-bar a {width: 100px; height: 25px; line-height:25px; margin-top:3px; margin-left:10px; background-color: #696969; border-radius: 3px; display: inline-block; font-size: 15px; color: #fff;}' +
+    '.jda-change-cmt-bar a.cmt-add {background-color: #df3033;}' +
+    '.jda-change-cmt-bar a.cmt-reset {background-color: #5cb85c;}' +
+    '.jda-change-cmt-bar a.cmt-refresh {background-color: #337ab7;}' +
+    '</style>');
+  $('.jda-change-cmt-bar .cmt-delete').live('click', function(e) {
+    e.preventDefault();
+    if ($('.jda-change-cmt-bar input').length == 1) {
+      return;
+    }
+    $(e.target).closest('.cmt-item').remove();
+    var cmts = []
+    $('.jda-change-cmt-bar input').each(function(index, el) {
+      cmts[index] = $(el).val();
+    });
+    JDA.setCmts(cmts);
+  });
+  $('.jda-change-cmt-bar .cmt-add').live('click', function(e) {
+    e.preventDefault();
+    var nodeString = ('<div class="cmt-item">' +
+    '<input type="text">' +
+    '<a href class="cmt-delete">删除</a>' +
+    '<a href class="cmt-add">增加</a>' +
+    '</div>');
+    $(nodeString).insertAfter($(e.target).closest('.cmt-item'));
+  });
+
+  $('.jda-change-cmt-bar input').live('change', function(e) {
+    var cmts = []
+    $('.jda-change-cmt-bar input').each(function(index, el) {
+      cmts[index] = $(el).val();
+    });
+    JDA.setCmts(cmts);
+    JDA.setCmtsSelect();
+  });
+
+  $('.jda-change-cmt-bar .cmt-reset').live('click', function(e) {
+    e.preventDefault();
+    JDA.setCmts(JDA.default_cmts);
+    $('.jda-change-cmt-bar').remove();
+    JDA.addChangeCmtBar();
+    JDA.setCmtsSelect();
+  });
+
+  $('.jda-change-cmt-bar .cmt-refresh').live('click', function(e) {
+    e.preventDefault();
+    JDA.setCmtsSelect();
+    JDA.setAllCmtTextarea();
+  });
 }
 
 JDA.init();

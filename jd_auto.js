@@ -276,7 +276,8 @@ JDA.addMenuBar = function() {
     '.jda-options .item.selected a {border: 2px solid #e4393c; padding: 4px 6px;}' +
     '.jda-cmts-options .cmt_change {width: 100px; height: 25px; line-height:25px; margin-top:3px; margin-left:10px; background-color: #337ab7; border-radius: 3px; display: inline-block; font-size: 15px; color: #fff;}' +
     '</style>');
-  $('.jda-cmts-options a').click(function(e) {
+  $('.jda-cmts-options .item a').click(function(e) {
+    e.preventDefault()
     var nowItem = e.target.closest('.item');
     JDA.setCmtsType($(nowItem).data('type'));
     $(nowItem).addClass('selected');
@@ -291,9 +292,6 @@ JDA.addMenuBar = function() {
     if (JDA.getCmtsType() == 'ordered') {
       JDA.setCmtTextarea()
     }
-  });
-  $('.jda-cmts-options .cmt_change').click(function(e) {
-
   });
 }
 
@@ -377,7 +375,9 @@ JDA.init();
 }; // jda_wrapper
 
 $().ready(function() {
-  var script = document.createElement('script');
-  script.appendChild(document.createTextNode('('+ jda_wrapper +')();'));
-  (document.body || document.head || document.documentElement).appendChild(script);
+  if (/\S*club.jd.com\/myJdcomments\/orderVoucher.action\S*/.test(window.location.href)) {
+    var script = document.createElement('script');
+    script.appendChild(document.createTextNode('('+ jda_wrapper +')();'));
+    (document.body || document.head || document.documentElement).appendChild(script);
+  }
 })

@@ -31,8 +31,13 @@ JDA.shuffle = function(length) {
 
 JDA.init = function() {
   JDA.setCmtsSelect();
+  //FIX bad code
+  $('.jda_auto_cmt_div select').live('change', function(e) {
+
+    JDA.setCmtTextarea($(e.target).closest('.fop-main').find('textarea'), $(e.target).find(':selected').attr('value'));
+  });
   JDA.startAll('body', JDA.getDefaultStar());
-  JDA.setAllCmtTextarea();
+  JDA.setCmtTextarea();
   $('#activityVoucher').bind('DOMNodeInserted', function(e) {
     JDA.startAll(e.target, JDA.getDefaultStar());
   });
@@ -148,26 +153,34 @@ JDA.setOrderCmt = function(order) {
   return JDA.setConfig('JDA_order_cmt', order);
 }
 
-JDA.setCmtTextarea = function(textarea, text = null) {
-  if (text == null) {
-    var ns = JDA.getCmts()
-    text = ns[Math.floor(Math.random() * ns.length)]
-  }
-  $(textarea).text(text)
-};
-
-JDA.setAllCmtTextarea = function() {
-  var type = JDA.getCmtsType();
-  var order = JDA.getOrderCmt();
-  var cmts = JDA.getCmts();
-  $('.f-textarea').find('textarea').each(function(index, el) {
-    if (type == 'random') {
-      JDA.setCmtTextarea(this);
-    } else {
-      JDA.setCmtTextarea(this, cmts[order]);
+JDA.setCmtTextarea = function(from = 'body', text = null) {
+  var block = function(target) {
+    var type = JDA.getCmtsType();
+    var order = JDA.getOrderCmt();
+    var cmts = JDA.getCmts();
+    var textTemp = text;
+    if (textTemp == null) {
+      if (type == 'random') {
+        var order = Math.floor(Math.random() * cmts.length)
+        textTemp = cmts[order];
+      } else {
+        textTemp = cmts[order];
+      }
+      $(target).closest('.fop-main').find('.jda_auto_cmt option[data-order=' + order + ']').prop('selected', true);
     }
-  });
-}
+    $(target).val(textTemp);
+  }
+
+  if ($(from).is('textarea')) {
+    $(from).each(function() {
+      block(this);
+    });
+  } else {
+    $(from).find('textarea').each(function() {
+      block(this);
+    });
+  }
+};
 
 JDA.cmtsSelectNodeString = function(wrapper = true) {
   var nodeString = ''
@@ -235,7 +248,7 @@ JDA.addMenuBar = function() {
     JDA.setDefaultStar(star);
   });
   // tags type
-  $(appendNode).append('<div class="dd jda-tag-options jda-options" style="float:right; margin-top: 9px; "><span style="float:left; padding-right:10px; font-size:15px; padding-top:2px;">标签选项:</span><div class="item" data-type="random"><a href="#none">随机标签</a></div> <div class="item" data-type="ordered"><a href="#none">顺序标签</a></div></div>');
+  $(appendNode).append('<div class="dd jda-tag-options jda-options" style="float:right; margin-top: 9px; "><span style="float:left; padding-right:10px; font-size:15px; padding-top:2px;">标签选项:</span><div style="float: left; margin-right:5px"><div class="item" data-type="random" style="margin-top: -10px; padding-bottom: 10px;"><a href="#none">随机标签</a></div> <div class="item" data-type="ordered"><a href="#none">顺序标签</a></div></div></div>');
   $('.jda-tag-options a').click(function(e) {
     var nowItem = e.target.closest('.item');
     JDA.setTagsType($(nowItem).data('type'));
@@ -257,25 +270,30 @@ JDA.addMenuBar = function() {
     JDA.setTags()
   });
   // cmts
-  $(appendNode).append('<div class="dd jda-cmts-options jda-options" style="float:right; margin-top: 9px; margin-right: 9px; "><span style="float:left; padding-right:10px; font-size:15px; padding-top:2px;">评论选项:</span><div class="item" data-type="random"><a href="#none">随机评论</a></div> <div class="item" data-type="ordered"><a href="#none">选定评论</a></div></div>');
+  $(appendNode).append('<div class="dd jda-cmts-options jda-options" style="float:right; margin-top: 9px; margin-right: 9px; "><span style="float:left; padding-right:10px;  font-size:15px; padding-top:4px;">评论选项:</span><div style="float:left;"><a href="#cmts_change" class="cmt_change">修改评论</a></div><div style="float: left; margin-left: 10px; margin-right:5px"><div class="item" data-type="random" style="margin-top: -10px; padding-bottom: 10px;"><a href="#none">随机评论</a></div> <div class="item" data-type="ordered"><a href="#none">选定评论</a></div></div></div>');
   $(appendNode).append('<style type="text/css">' +
-    '.jda-options .item {margin: 2px 8px 2px 0; float: left;}' +
     '.jda-options .item a {padding:6px 8px; border:1px solid #ccc;  background: #fff; font-size: 13px;}' +
     '.jda-options .item.selected a {border: 2px solid #e4393c; padding: 4px 6px;}' +
+    '.jda-cmts-options .cmt_change {width: 100px; height: 25px; line-height:25px; margin-top:3px; margin-left:10px; background-color: #337ab7; border-radius: 3px; display: inline-block; font-size: 15px; color: #fff;}' +
     '</style>');
   $('.jda-cmts-options a').click(function(e) {
     var nowItem = e.target.closest('.item');
     JDA.setCmtsType($(nowItem).data('type'));
     $(nowItem).addClass('selected');
     $(nowItem).siblings('.item').removeClass('selected');
-    JDA.setAllCmtTextarea()
+    JDA.setCmtTextarea()
   });
   $('.jda-cmts-options .item[data-type=' + JDA.getCmtsType() + ']').addClass('selected');
   $('.jda-cmts-options').append(JDA.cmtsSelectNodeString(false));
-  $('.jda-cmts-options select').change(function(e) {
+  $('.jda-cmts-options .jda_auto_cmt').find('option[data-order=' + JDA.getOrderCmt() + ']').prop('selected', true);
+  $('.jda-cmts-options .jda_auto_cmt').change(function(e) {
     JDA.setOrderCmt(parseInt($(e.target).find(':selected').data('order')));
-    if (JDA.getCmtsType == 'ordered') {}
-    JDA.setAllCmtTextarea()
+    if (JDA.getCmtsType() == 'ordered') {
+      JDA.setCmtTextarea()
+    }
+  });
+  $('.jda-cmts-options .cmt_change').click(function(e) {
+
   });
 }
 
@@ -292,7 +310,7 @@ JDA.addChangeCmtBar = function() {
     '<a href class="cmt-add">增加</a>' +
     '</div>');
   });
-  nodeString += ('<div class="cmt-functions" style="width: 100%; text-align: center; padding-top: 20px;">' +
+  nodeString += ('<div id="cmts_change" class="cmt-functions" style="width: 100%; text-align: center; padding-top: 20px;">' +
     '<a href class="cmt-reset">重置</a>' +
     '<a href class="cmt-refresh">刷新所有评论</a>' +
     '</div>');
@@ -350,7 +368,7 @@ JDA.addChangeCmtBar = function() {
   $('.jda-change-cmt-bar .cmt-refresh').live('click', function(e) {
     e.preventDefault();
     JDA.setCmtsSelect();
-    JDA.setAllCmtTextarea();
+    JDA.setCmtTextarea();
   });
 }
 

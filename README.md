@@ -8,7 +8,8 @@ Usage
 -----
 安装Userscript
 
-### For Chrome
+### Chrome
+---
 
 [Tampermonkey](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo)
 或者直接拖拽到 Chrome Extensions 安装

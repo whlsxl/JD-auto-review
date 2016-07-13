@@ -5,7 +5,7 @@
 // @include     http://club.jd.com/*
 // @version     0.1
 // @run-at document-end
-// @copyright  2016+, Hailong <whlsxl@126.com>
+// @copyright  2016+, Hailong Wang <whlsxl@126.com>
 // ==/UserScript==
 function jda_wrapper() {
 

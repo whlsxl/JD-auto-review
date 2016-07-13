@@ -10,7 +10,6 @@ Usage
 打开京东[评论页](http://club.jd.com/myJdcomments/myJdcomment.action), 点击任意订单评论。插件自动生成评论内容。
 
 ### Chrome
----
 
 [Tampermonkey](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo)
 或者直接拖拽到 Chrome Extensions 安装
